@@ -46,7 +46,7 @@ TEXTURE_SHAPE_DATASETS = ["original", "greyscale",
                           "cue-conflict"]
 
 DEFAULT_DATASETS = ["edge", "silhouette", "cue-conflict"] + \
-                   NOISE_GENERALISATION_DATASETS + ["sketch", "stylized"]
+                   NOISE_GENERALISATION_DATASETS + ["sketch", "stylized"] + ["original", "greyscale"]
 ##################################################################
 # PLOT TYPES
 ##################################################################

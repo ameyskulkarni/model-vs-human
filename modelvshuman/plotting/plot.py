@@ -358,11 +358,19 @@ def get_mean_over_datasets(colname,
             else:
                 raise ValueError("unknown")
             r1 = metric_fun.analysis(df=df_selection)
-            result_df = result_df.append([{"plotting_name": dmaker.plotting_name,
-                                           "dataset": d.name,
-                                           colname: r1[metric_name],
-                                           "color": dmaker.color}],
-                                         ignore_index=True)
+            # result_df = result_df.append([{"plotting_name": dmaker.plotting_name,
+            #                                "dataset": d.name,
+            #                                colname: r1[metric_name],
+            #                                "color": dmaker.color}],
+            #                              ignore_index=True)
+            new_row = pd.DataFrame([{
+                "plotting_name": dmaker.plotting_name,
+                "dataset": d.name,
+                colname: r1[metric_name],
+                "color": dmaker.color
+            }])
+
+            result_df = pd.concat([result_df, new_row], ignore_index=True)
 
     # average over datasets
     result_df = result_df.groupby(['plotting_name', 'color'], as_index=False)[colname].mean()
@@ -604,6 +612,7 @@ def plot_shape_bias_boxplot(datasets,
                 decision_maker_to_shape_bias_humans_dict[dmaker_human] = class_avgs.tolist()
             df_results_humans = pd.DataFrame(decision_maker_to_shape_bias_humans_dict)
             df_results_humans["humans"] = df_results_humans.mean(axis=1)
+            # print(f"df_results humans : {df_results_humans['humans']}")
 
         else:
             subject_name = dmaker.decision_makers[0]
@@ -619,6 +628,7 @@ def plot_shape_bias_boxplot(datasets,
 
     decision_maker_to_shape_bias_dict["humans"] = df_results_humans.humans.tolist()
     df_results = pd.DataFrame(decision_maker_to_shape_bias_dict)
+    print(f"decision_maker_to_shape_bias_dict : {np.mean(decision_maker_to_shape_bias_dict['resnet50'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN_and_IN'])}||{np.mean(decision_maker_to_shape_bias_dict['humans'])}")
     boxplot = ax.boxplot(df_results,
                          vert=True,  # vertical box alignment
                          patch_artist=True,  # fill with color
@@ -873,7 +883,9 @@ def get_raw_benchmark_df(datasets, metric_names, decision_maker_fun,
                                                  colname=colname,
                                                  condition=condition)
                             rows_list.append(row)
-        result_df = result_df.append(rows_list, ignore_index=True)
+        # result_df = result_df.append(rows_list, ignore_index=True)
+        rows_df = pd.DataFrame(rows_list)
+        result_df = pd.concat([result_df, rows_df], ignore_index=True)
         return result_df
 
     result_df = pd.DataFrame(columns=['model', 'human', 'dataset', 'metric',
@@ -1066,7 +1078,12 @@ def format_benchmark_df(df, decision_makers, metric_names,
             analysis, metric_name = METRICS[colname]
             scalar = dfh.loc[dfh["metric"] == colname]["value"].values[0]
             human_dict[colname] = scalar
-        df = df.append(human_dict, ignore_index=True)
+        # df = df.append(human_dict, ignore_index=True)
+
+        human_df = pd.DataFrame([human_dict])
+
+        # Concatenate the new row
+        df = pd.concat([df, human_df], ignore_index=True)
 
     # replace model name with the model's plotting name
     df["plotting_name"] = df["model"].apply(

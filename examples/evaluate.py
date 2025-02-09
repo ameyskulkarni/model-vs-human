@@ -7,7 +7,8 @@ from plotting_definition import plotting_definition_template
 
 
 def run_evaluation():
-    models = ["resnet50", "bagnet33", "simclr_resnet50x1"]
+    # models = ["resnet50", "bagnet33", "simclr_resnet50x1"]
+    models = ["resnet50", "resnet50_trained_on_SIN", "resnet50_trained_on_SIN_and_IN"]
     datasets = c.DEFAULT_DATASETS # or e.g. ["cue-conflict", "uniform-noise"]
     params = {"batch_size": 64, "print_predictions": True, "num_workers": 20}
     Evaluate()(models, datasets, **params)
@@ -15,6 +16,7 @@ def run_evaluation():
 
 def run_plotting():
     plot_types = c.DEFAULT_PLOT_TYPES # or e.g. ["accuracy", "shape-bias"]
+    # plot_types = ["shape-bias"]
     plotting_def = plotting_definition_template
     figure_dirname = "example-figures/"
     Plot(plot_types = plot_types, plotting_definition = plotting_def,
