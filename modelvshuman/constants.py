@@ -46,7 +46,7 @@ TEXTURE_SHAPE_DATASETS = ["original", "greyscale",
                           "cue-conflict"]
 
 DEFAULT_DATASETS = ["edge", "silhouette", "cue-conflict"] + \
-                   NOISE_GENERALISATION_DATASETS + ["sketch", "stylized"] + ["original", "greyscale"]
+                   NOISE_GENERALISATION_DATASETS + ["sketch", "stylized"]
 ##################################################################
 # PLOT TYPES
 ##################################################################
@@ -99,6 +99,9 @@ TORCHVISION_MODELS = ["alexnet",
                       "mnasnet1_0"]
 
 BAGNET_MODELS = ["bagnet9", "bagnet17", "bagnet33"]
+
+DEIT_MODELS = ["deit_base_patch16_224", "deit_small_patch16_224", "deit_tiny_patch16_224"]
+JIGSAW_MODELS = ["jigsaw_base_patch16_224", "jigsaw_small_patch16_224"]
 
 SHAPENET_MODELS = ["resnet50_trained_on_SIN",
                    "resnet50_trained_on_SIN_and_IN",

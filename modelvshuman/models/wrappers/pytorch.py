@@ -3,8 +3,11 @@ import PIL
 import clip
 import numpy as np
 import torch
+import torch.nn as nn
 from PIL.Image import Image
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize, ToPILImage
+from timm.models.vision_transformer import VisionTransformer, _cfg
+from munch import Munch
 from tqdm import tqdm
 
 from .base import AbstractModel
@@ -57,6 +60,126 @@ class PytorchModel(AbstractModel):
         logits = self.model(images)
         return self.to_numpy(logits)
 
+
+class JigsawVisionTransformer(VisionTransformer):
+    def __init__(self, mask_ratio, use_jigsaw, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mask_ratio = mask_ratio
+        self.use_jigsaw = use_jigsaw
+
+        self.num_patches = self.patch_embed.num_patches
+
+        if self.use_jigsaw:
+            self.jigsaw = torch.nn.Sequential(*[torch.nn.Linear(self.embed_dim, self.embed_dim),
+                                                torch.nn.ReLU(),
+                                                torch.nn.Linear(self.embed_dim, self.embed_dim),
+                                                torch.nn.ReLU(),
+                                                torch.nn.Linear(self.embed_dim, self.num_patches)])
+            self.target = torch.arange(self.num_patches)
+
+    def to_numpy(self, x):
+        if x.is_cuda:
+            return x.detach().cpu().numpy()
+        else:
+            return x.numpy()
+
+    def softmax(self, logits):
+        assert type(logits) is np.ndarray
+
+        softmax_op = torch.nn.Softmax(dim=1)
+        softmax_output = softmax_op(torch.Tensor(logits))
+        return self.to_numpy(softmax_output)
+
+    def random_masking(self, x, mask_ratio):
+        """
+        Perform per-sample random masking by per-sample shuffling.
+        Per-sample shuffling is done by argsort random noise.
+        x: [N, L, D], sequence
+        """
+        N, L, D = x.shape  # batch, length, dim [128, 196, 384]
+        len_keep = int(L * (1 - mask_ratio))
+
+        noise = torch.rand(N, L, device=x.device)  # noise in [0, 1]
+
+        # sort noise for each sample
+        ids_shuffle = torch.argsort(noise, dim=1)  # ascend: small is keep, large is remove
+        # target = einops.repeat(self.target, 'L -> N L', N=N)
+        # target = target.to(x.device)
+
+        # keep the first subset
+        ids_keep = ids_shuffle[:, :len_keep]  # N, len_keep
+        x_masked = torch.gather(x, dim=1, index=ids_keep.unsqueeze(-1).repeat(1, 1, D))
+        target_masked = ids_keep
+
+        return x_masked, target_masked
+
+    def forward_jigsaw(self, x):
+        # masking: length -> length * mask_ratio
+        x, target = self.random_masking(x, self.mask_ratio)
+
+        # append cls token
+        cls_tokens = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+
+        # apply Transformer blocks
+        x = self.blocks(x)
+        x = self.norm(x)
+        x = self.jigsaw(x[:, 1:])
+        # print(f"pred jigsaw and target jigsaw: {x.shape}/{target.shape}")
+        # print(x, target)
+        return x.reshape(-1, self.num_patches), target.reshape(-1)
+
+    def forward_cls(self, x):
+        # add pos embed w/o cls token
+        x = x + self.pos_embed[:, 1:, :]
+
+        # append cls token
+        cls_token = self.cls_token + self.pos_embed[:, :1, :]
+        cls_tokens = cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
+
+        x = self.blocks(x)
+        x = self.norm(x)
+        x = self.head(x[:, 0])
+        return x
+
+    def forward_batch(self, x):
+        assert type(x) is torch.Tensor
+        x = self.patch_embed(x)  # [128, 3, 224, 224] -> [128, 196, 384]
+        pred_cls = self.forward_cls(x)  # [128, 1000]. These are logits, not probabilities.
+        outs = Munch(sup=pred_cls)
+        if self.use_jigsaw:
+            pred_jigsaw, targets_jigsaw = self.forward_jigsaw(
+                x)  # pred_jigsaw is resized from [128, 98, 196] and targets_jigsaw is resized from [128, 98]. The pred values are still logits.
+            outs.pred_jigsaw = pred_jigsaw
+            outs.gt_jigsaw = targets_jigsaw
+        return self.to_numpy(outs.sup)
+
+class NoPositionalVisionTransformer(VisionTransformer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove positional embedding
+        self.pos_drop = nn.Identity()  # Replace pos_drop with Identity layer
+
+        # Optionally, you can also zero out the position_embedding if it exists
+        if hasattr(self, 'pos_embed'):
+            nn.init.zeros_(self.pos_embed)
+
+    # def to_numpy(self, x):
+    #     if x.is_cuda:
+    #         return x.detach().cpu().numpy()
+    #     else:
+    #         return x.numpy()
+    #
+    # def softmax(self, logits):
+    #     assert type(logits) is np.ndarray
+    #
+    #     softmax_op = torch.nn.Softmax(dim=1)
+    #     softmax_output = softmax_op(torch.Tensor(logits))
+    #     return self.to_numpy(softmax_output)
+    #
+    # def forward_batch(self, x):
+    #     self.forward(x)
 
 class PyContrastPytorchModel(PytorchModel):
     """

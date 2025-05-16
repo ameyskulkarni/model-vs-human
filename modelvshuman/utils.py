@@ -4,6 +4,7 @@ import sys
 import shutil
 import requests
 from os.path import join
+import torch
 
 import torchvision.models as zoomodels
 from tqdm import tqdm

@@ -628,7 +628,7 @@ def plot_shape_bias_boxplot(datasets,
 
     decision_maker_to_shape_bias_dict["humans"] = df_results_humans.humans.tolist()
     df_results = pd.DataFrame(decision_maker_to_shape_bias_dict)
-    print(f"decision_maker_to_shape_bias_dict : {np.mean(decision_maker_to_shape_bias_dict['resnet50'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN_and_IN'])}||{np.mean(decision_maker_to_shape_bias_dict['humans'])}")
+    print(f"decision_maker_to_shape_bias_dict : {np.mean(decision_maker_to_shape_bias_dict['deit_tiny_no_positional_encoding'])}||{np.mean(decision_maker_to_shape_bias_dict['jigsaw_base_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['jigsaw_small_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['jigsaw_tiny_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['deit_base_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['deit_small_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['deit_tiny_patch16_224'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN'])}||{np.mean(decision_maker_to_shape_bias_dict['resnet50_trained_on_SIN_and_IN'])}||{np.mean(decision_maker_to_shape_bias_dict['humans'])}")
     boxplot = ax.boxplot(df_results,
                          vert=True,  # vertical box alignment
                          patch_artist=True,  # fill with color

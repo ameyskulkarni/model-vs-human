@@ -8,7 +8,8 @@ from plotting_definition import plotting_definition_template
 
 def run_evaluation():
     # models = ["resnet50", "bagnet33", "simclr_resnet50x1"]
-    models = ["resnet50", "resnet50_trained_on_SIN", "resnet50_trained_on_SIN_and_IN"]
+    # models = ["deit_base_patch16_224", "deit_small_patch16_224", "deit_tiny_patch16_224", "resnet50", "resnet50_trained_on_SIN", "resnet50_trained_on_SIN_and_IN"]
+    models = ["deit_tiny_no_positional_encoding", "deit_tiny_patch16_224", "jigsaw_tiny_patch16_224"]
     datasets = c.DEFAULT_DATASETS # or e.g. ["cue-conflict", "uniform-noise"]
     params = {"batch_size": 64, "print_predictions": True, "num_workers": 20}
     Evaluate()(models, datasets, **params)

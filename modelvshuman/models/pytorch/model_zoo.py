@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import torch
+import torch.nn as nn
+from functools import partial
 
 from ..registry import register_model
 from ..wrappers.pytorch import PytorchModel, PyContrastPytorchModel, ClipPytorchModel, \
-    ViTPytorchModel, EfficientNetPytorchModel, SwagPytorchModel
+    ViTPytorchModel, EfficientNetPytorchModel, SwagPytorchModel, JigsawVisionTransformer, NoPositionalVisionTransformer
 
 _PYTORCH_IMAGE_MODELS = "rwightman/pytorch-image-models"
 
@@ -16,6 +18,96 @@ def model_pytorch(model_name, *args):
     model = torch.nn.DataParallel(model)
     return PytorchModel(model, model_name, *args)
 
+
+@register_model("pytorch")
+def deit_base_patch16_224(model_name, *args):
+    model = torch.hub.load('facebookresearch/deit:main', model_name, pretrained=True)
+    return PytorchModel(model, model_name, *args)
+
+@register_model("pytorch")
+def deit_small_patch16_224(model_name, *args):
+    model = torch.hub.load('facebookresearch/deit:main', model_name, pretrained=True)
+    return PytorchModel(model, model_name, *args)
+
+@register_model("pytorch")
+def deit_tiny_patch16_224(model_name, *args):
+    print(f"Accessing the tiny deit model!!!!!!!!!!!!!!!!")
+    model = torch.hub.load('facebookresearch/deit:main', model_name, pretrained=True)
+    checkpoint = torch.load(
+        '/home/cognition/projects/deit/models/deit_tiny_without_positional_encodings_bs1024_5e-4_300ep/best_checkpoint.pth',
+        map_location='cuda')
+    model.load_state_dict(checkpoint['model'])
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(DEVICE)
+    model.eval()
+    return PytorchModel(model, model_name, *args)
+
+@register_model("pytorch")
+def deit_tiny_no_positional_encoding(model_name, *args):
+    print(f"Accessing the tiny deit no position encoding model!!!!!!!!!!!!!!!!")
+    model = NoPositionalVisionTransformer(
+        patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6))
+
+    checkpoint = torch.load(
+        '/home/cognition/projects/deit/models/deit_tiny_without_positional_encodings_bs1024_5e-4_300ep/best_checkpoint.pth',
+        map_location='cuda')
+    # Remove positional embedding from state dict if loading a pretrained model
+    if 'pos_embed' in checkpoint['model']:
+        del checkpoint['model']['pos_embed']
+
+    model.load_state_dict(checkpoint["model"], strict=False)
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(DEVICE)
+    model.eval()
+    return PytorchModel(model, model_name, *args)
+
+@register_model("pytorch")
+def jigsaw_small_patch16_224(model_name, *args):
+    model = JigsawVisionTransformer(
+        mask_ratio=0.5, use_jigsaw=True,
+        patch_size=16, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6))
+
+    checkpoint = torch.load('/home/cognition/projects/jigsaw-vit/JigsawViT/imagenet/jigsaw-deit/model/jigsaw_small_deit/imagenet-deit_small_patch16_224-jigsaw-eta0.1-r0.5-acc80.51.pth', map_location='cuda')
+    model.load_state_dict(checkpoint['model'])
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(DEVICE)
+    model.eval()
+    return model
+
+
+@register_model("pytorch")
+def jigsaw_base_patch16_224(model_name, *args):
+    model = JigsawVisionTransformer(
+        mask_ratio=0.5, use_jigsaw=True,
+        patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6))
+
+    checkpoint = torch.load(
+        '/home/cognition/projects/jigsaw-vit/JigsawViT/imagenet/jigsaw-deit/model/jigsaw_base_results/best_checkpoint.pth',
+        map_location='cuda')
+    model.load_state_dict(checkpoint['model'])
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(DEVICE)
+    model.eval()
+    return model
+
+@register_model("pytorch")
+def jigsaw_tiny_patch16_224(model_name, *args):
+    model = JigsawVisionTransformer(
+        mask_ratio=0.5, use_jigsaw=True,
+        patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6))
+
+    checkpoint = torch.load(
+        '/home/cognition/projects/jigsaw-vit/JigsawViT/imagenet/jigsaw-deit/model/jigsaw_tiny_imagenet_2_10_lr_5e-4_cosine_bs_256_500ep_BSU/best_checkpoint.pth',
+        map_location='cuda')
+    model.load_state_dict(checkpoint['model'])
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(DEVICE)
+    model.eval()
+    return model
 
 @register_model("pytorch")
 def resnet50_trained_on_SIN(model_name, *args):

@@ -46,6 +46,28 @@ def plotting_definition_template(df):
     decision_makers.append(DecisionMaker(name_pattern="resnet50_trained_on_SIN_and_IN",
                            color=rgb(210, 150, 0), marker="o", df=df,
                            plotting_name="resnet50_trained_on_SIN_and_IN"))
+    decision_makers.append(DecisionMaker(name_pattern="deit_base_patch16_224",
+                                         color=rgb(110, 110, 110), marker="o", df=df,
+                                         plotting_name="deit_base_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="deit_small_patch16_224",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="deit_small_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="deit_tiny_patch16_224",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="deit_tiny_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="jigsaw_base_patch16_224",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="jigsaw_base_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="jigsaw_small_patch16_224",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="jigsaw_small_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="jigsaw_tiny_patch16_224",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="jigsaw_tiny_patch16_224"))
+    decision_makers.append(DecisionMaker(name_pattern="deit_tiny_no_positional_encoding",
+                                         color=rgb(210, 150, 0), marker="o", df=df,
+                                         plotting_name="deit_tiny_no_positional_encoding"))
+
     decision_makers.append(DecisionMaker(name_pattern="subject-*",
                            color=rgb(165, 30, 55), marker="D", df=df,
                            plotting_name="humans"))
